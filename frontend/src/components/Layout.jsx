@@ -11,8 +11,14 @@ import {
   Paper,
   Button,
   Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import HomeIcon from "@mui/icons-material/Home";
 import PeopleIcon from "@mui/icons-material/People";
@@ -40,11 +46,22 @@ export default function Layout() {
     { to: "/usuarios", label: "Usuarios", icon: <PeopleIcon /> },
   ];
 
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+
   const handleEditAccount = () => {
     navigate(`/usuarios/${user?.id || 1}/editar`);
   };
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutDialogOpen(false);
+  };
+
+  const handleLogoutConfirm = () => {
+    setLogoutDialogOpen(false);
     logout();
   };
 
@@ -178,7 +195,7 @@ export default function Layout() {
               fullWidth
               startIcon={<LogoutIcon />}
               data-testid="button-layout-logout"
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               sx={{
                 fontFamily: '"Rubik", sans-serif',
                 fontSize: 13,
@@ -232,6 +249,39 @@ export default function Layout() {
           <Outlet />
         </Container>
       </Box>
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleLogoutCancel}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <DialogTitle id="logout-dialog-title">
+          ¿Cerrar sesión?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            ¿Estás seguro de que quieres cerrar sesión?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            id="button-logout-cancel"
+            onClick={handleLogoutCancel}
+            variant="outlined"
+          >
+            Cancelar
+          </Button>
+          <Button
+            id="button-logout-confirm"
+            onClick={handleLogoutConfirm}
+            variant="contained"
+            color="error"
+            startIcon={<LogoutIcon />}
+          >
+            Cerrar sesión
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

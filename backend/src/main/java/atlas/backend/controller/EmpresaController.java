@@ -2,11 +2,18 @@ package atlas.backend.controller;
 
 import atlas.backend.exception.ResourceNotFoundException;
 import atlas.backend.model.Empresa;
+import atlas.backend.model.EmpresaUsuario;
+import atlas.backend.model.Rol;
+import atlas.backend.model.Usuario;
+import atlas.backend.repository.EmpresaUsuarioRepository;
+import atlas.backend.repository.RolRepository;
 import atlas.backend.service.EmpresaService;
+import atlas.backend.service.UsuarioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
@@ -14,9 +21,18 @@ import java.util.List;
 public class EmpresaController {
 
     private final EmpresaService empresaService;
+    private final UsuarioService usuarioService;
+    private final RolRepository rolRepository;
+    private final EmpresaUsuarioRepository empresaUsuarioRepository;
 
-    public EmpresaController(EmpresaService empresaService) {
+    public EmpresaController(EmpresaService empresaService,
+                             UsuarioService usuarioService,
+                             RolRepository rolRepository,
+                             EmpresaUsuarioRepository empresaUsuarioRepository) {
         this.empresaService = empresaService;
+        this.usuarioService = usuarioService;
+        this.rolRepository = rolRepository;
+        this.empresaUsuarioRepository = empresaUsuarioRepository;
     }
 
     @GetMapping
@@ -32,8 +48,24 @@ public class EmpresaController {
     }
 
     @PostMapping
-    public ResponseEntity<Empresa> crearEmpresa(@RequestBody Empresa empresa) {
-        Empresa nuevaEmpresa = empresaService.crear(empresa);
+    public ResponseEntity<Empresa> crearEmpresa(@RequestBody RegistroDTO dto) {
+        Empresa empresaTarget = dto.toEmpresa();
+        Empresa nuevaEmpresa = empresaService.crear(empresaTarget);
+
+        if (dto.getUsuario() != null) {
+            Usuario nuevoUsuario = usuarioService.crear(dto.getUsuario());
+
+            Rol rolAdmin = rolRepository.findByNombre("administrador")
+                    .orElseGet(() -> rolRepository.save(new Rol("administrador")));
+
+            EmpresaUsuario eu = new EmpresaUsuario();
+            eu.setEmpresa(nuevaEmpresa);
+            eu.setUsuario(nuevoUsuario);
+            eu.setRol(rolAdmin);
+            eu.setCreatedAt(OffsetDateTime.now());
+            empresaUsuarioRepository.save(eu);
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaEmpresa);
     }
 

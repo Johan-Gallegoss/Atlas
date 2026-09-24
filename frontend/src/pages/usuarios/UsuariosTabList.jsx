@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   IconButton,
   Stack,
@@ -25,10 +25,10 @@ export default function UsuariosTabList({ items, onDelete }) {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  const handleDeleteClick = (id, nombreUsuario) => {
+  const handleDeleteClick = useCallback((id, nombreUsuario) => {
     setUserToDelete({ id, nombreUsuario });
     setOpenDeleteDialog(true);
-  };
+  }, []);
 
   const handleDeleteConfirm = () => {
     if (userToDelete) {

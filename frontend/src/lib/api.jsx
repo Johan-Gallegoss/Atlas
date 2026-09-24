@@ -15,22 +15,20 @@ export function setAuthToken(token) {
   }
 }
 
-// Interceptor para agregar el token automáticamente a todas las peticiones (excepto login y registro)
+// Interceptor para agregar el token automáticamente a todas las peticiones (excepto login y POST /empresas)
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     const url = config.url || "";
+    const method = config.method?.toLowerCase();
 
-    // Rutas públicas que no requieren token
+    // POST /empresas es el registro inicial y NUNCA debe enviar Authorization
+    const isPostEmpresas = url.includes("/empresas") && method === "post";
     const isLogin = url.includes("/autenticacion/login");
-    // El registro es POST a /empresas cuando no hay token (usuario nuevo)
-    const isRegister =
-      url.includes("/empresas") &&
-      config.method?.toLowerCase() === "post" &&
-      !token;
 
-    // Si no es login ni registro, agregar el token si existe
-    if (!isLogin && !isRegister && token) {
+    if (isPostEmpresas) {
+      delete config.headers.Authorization;
+    } else if (!isLogin && token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 

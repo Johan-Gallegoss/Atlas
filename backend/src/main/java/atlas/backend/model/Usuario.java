@@ -31,9 +31,11 @@ public class Usuario {
 
     public String getNombreUsuario() { return nombreUsuario; }
     public void setNombreUsuario(String nombreUsuario) { this.nombreUsuario = nombreUsuario; }
+    public void setNombre_usuario(String nombre_usuario) { this.nombreUsuario = nombre_usuario; }
 
     public String getContrasenaHash() { return contrasenaHash; }
     public void setContrasenaHash(String contrasenaHash) { this.contrasenaHash = contrasenaHash; }
+    public void setContrasena_hash(String contrasena_hash) { this.contrasenaHash = contrasena_hash; }
 
     public String getCorreo() { return correo; }
     public void setCorreo(String correo) { this.correo = correo; }

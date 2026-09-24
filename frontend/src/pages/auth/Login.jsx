@@ -1,5 +1,8 @@
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
+import { loginRequest } from "../../authConfig";
 import { useAuth } from "../../hooks/useAuth";
 import bgRegistro from "../../assets/bg-registro.jpg";
 import { toast } from "sonner";
@@ -22,15 +25,24 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Login() {
   const { register, handleSubmit } = useForm({
     defaultValues: { nombre_usuario: "", password: "" },
   });
-  const { login, loading } = useAuth();
+  const { login, loading, user } = useAuth();
+  const { instance, inProgress } = useMsal();
   const [openDialog, setOpenDialog] = useState(false);
   const navigate = useNavigate();
+
+  // Si el usuario ya está autenticado (sesión persistente o redirect ya procesado en main.jsx),
+  // redirigir a /home directamente sin mostrar notificación extra.
+  useEffect(() => {
+    if (user) {
+      navigate("/home", { replace: true });
+    }
+  }, [user, navigate]);
 
   const onSubmit = async (values) => {
     try {
@@ -39,6 +51,18 @@ export default function Login() {
       navigate("/home", { replace: true });
     } catch {
       toast.error("Credenciales inválidas");
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    if (inProgress !== InteractionStatus.None && inProgress !== "none") {
+      return;
+    }
+    try {
+      await instance.loginRedirect(loginRequest);
+    } catch (error) {
+      console.error("Error al iniciar sesión con Microsoft:", error);
+      toast.error("Error al iniciar sesión con Microsoft");
     }
   };
 
@@ -111,6 +135,31 @@ export default function Login() {
             >
               {loading ? "Ingresando..." : "Entrar"}
             </button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">O</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleMicrosoftLogin}
+              data-testid="button-msal-login"
+              className="w-full flex items-center justify-center gap-2 text-gray-700 py-3 text-lg font-semibold bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 23 23">
+                <path fill="#f35325" d="M1 1h10v10H1z" />
+                <path fill="#81bc06" d="M12 1h10v10H1z" />
+                <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                <path fill="#ffba08" d="M12 12h10v10H1z" />
+              </svg>
+              Iniciar sesión con Microsoft
+            </button>
+
             <p className="text-center mt-4 text-gray-600 text-sm">
               ¿No tienes cuenta?{" "}
               <Link
@@ -202,7 +251,7 @@ export default function Login() {
                   Esta aplicación fue desarrollada para DUOC UC en el año 2025,
                   en el marco de la asignatura{" "}
                   <strong className="text-primary">
-                    ISY1102 – Calidad y Seguridad en el Desarrollo de Software
+                    ISY1102 - Calidad y Seguridad en el Desarrollo de Software
                   </strong>
                   . Su objetivo es presentar a los estudiantes un caso realista
                   de desarrollo de software, que incorpore las características

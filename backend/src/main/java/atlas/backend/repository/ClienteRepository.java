@@ -12,6 +12,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     List<Cliente> findByEmpresaOrderByIdDesc(Empresa empresa);
     List<Cliente> findByEmpresaIdOrderByIdDesc(Long empresaId);
     List<Cliente> findByNombreContainingIgnoreCaseAndEmpresaIdOrderByNombreAsc(String nombre, Long empresaId);
+    List<Cliente> findByNombreContainingIgnoreCaseOrderByNombreAsc(String nombre);
     Optional<Cliente> findByIdAndEmpresaId(Long id, Long empresaId);
     Optional<Cliente> findByCorreo(String correo);
     boolean existsByCorreo(String correo);
