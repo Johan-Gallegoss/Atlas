@@ -1,6 +1,7 @@
 package atlas.backend.controller;
 
 import atlas.backend.exception.ResourceNotFoundException;
+import atlas.backend.messaging.ContratoEventProducer;
 import atlas.backend.model.Contrato;
 import atlas.backend.repository.ContratoRepository;
 import org.springframework.http.HttpStatus;
@@ -15,9 +16,12 @@ import java.util.List;
 public class ContratoController {
 
     private final ContratoRepository contratoRepository;
+    private final ContratoEventProducer contratoEventProducer;
 
-    public ContratoController(ContratoRepository contratoRepository) {
+    public ContratoController(ContratoRepository contratoRepository,
+                              ContratoEventProducer contratoEventProducer) {
         this.contratoRepository = contratoRepository;
+        this.contratoEventProducer = contratoEventProducer;
     }
 
     @GetMapping
@@ -44,6 +48,10 @@ public class ContratoController {
             contrato.setCreatedAt(OffsetDateTime.now());
         }
         Contrato nuevoContrato = contratoRepository.save(contrato);
+
+        // Publicar evento "contrato.creado" en RabbitMQ
+        contratoEventProducer.publicarContratoCreado(nuevoContrato.getId(), nuevoContrato.getTitulo());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoContrato);
     }
 
@@ -59,6 +67,10 @@ public class ContratoController {
             existente.setCliente(contratoDetails.getCliente());
         }
         Contrato actualizado = contratoRepository.save(existente);
+
+        // Publicar evento "contrato.actualizado" en RabbitMQ
+        contratoEventProducer.publicarContratoActualizado(actualizado.getId(), actualizado.getTitulo());
+
         return ResponseEntity.ok(actualizado);
     }
 

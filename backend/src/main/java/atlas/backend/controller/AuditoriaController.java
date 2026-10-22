@@ -1,5 +1,6 @@
 package atlas.backend.controller;
 
+import atlas.backend.messaging.AuditoriaEventProducer;
 import atlas.backend.model.Auditoria;
 import atlas.backend.repository.AuditoriaRepository;
 import org.springframework.http.HttpStatus;
@@ -14,9 +15,12 @@ import java.util.List;
 public class AuditoriaController {
 
     private final AuditoriaRepository auditoriaRepository;
+    private final AuditoriaEventProducer auditoriaEventProducer;
 
-    public AuditoriaController(AuditoriaRepository auditoriaRepository) {
+    public AuditoriaController(AuditoriaRepository auditoriaRepository,
+                               AuditoriaEventProducer auditoriaEventProducer) {
         this.auditoriaRepository = auditoriaRepository;
+        this.auditoriaEventProducer = auditoriaEventProducer;
     }
 
     @GetMapping
@@ -33,6 +37,10 @@ public class AuditoriaController {
             auditoria.setFechaHora(OffsetDateTime.now());
         }
         Auditoria guardado = auditoriaRepository.save(auditoria);
+
+        // Publicar evento "auditoria.registro" en RabbitMQ
+        auditoriaEventProducer.publicarAuditoriaRegistro(guardado.getId(), guardado.getUsuarioId(), guardado.getAccion());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
     }
 }
